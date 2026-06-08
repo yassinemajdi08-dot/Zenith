@@ -1,4 +1,7 @@
 const { Client, GatewayIntentBits } = require("discord.js");
+const { loadModel, checkImage } = require("./ai/model");
+const fetch = require("node-fetch");
+const fs = require("fs");
 
 const client = new Client({
   intents: [
@@ -8,31 +11,39 @@ const client = new Client({
   ]
 });
 
-const NSFW_THRESHOLD = 0.6;
+const THRESHOLD = 0.6;
 
-client.on("ready", () => {
-  console.log("Bot is ready!");
+client.on("ready", async () => {
+  console.log("Zenith is ready");
+  await loadModel();
 });
-
-// 🔴 هذا “فحص بسيط مبدئي”
-function fakeAIscore() {
-  return Math.random(); // لاحقًا نستبدله بـ AI حقيقي
-}
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  for (const attachment of message.attachments.values()) {
+  for (const file of message.attachments.values()) {
 
-    const score = fakeAIscore();
+    const url = file.url;
+    const path = "./temp_" + Date.now();
 
-    console.log("Score:", score);
+    try {
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(path, buffer);
 
-    if (score > NSFW_THRESHOLD) {
-      await message.delete().catch(() => {});
-      console.log("Message deleted");
+      const score = await checkImage(path);
+
+      console.log("NSFW Score:", score);
+
+      if (score >= THRESHOLD) {
+        await message.delete().catch(() => {});
+      }
+
+    } catch (err) {
+      console.log("Error:", err.message);
     }
   }
 });
 
+client.login(process.env.TOKEN);
 client.login(process.env.TOKEN);
