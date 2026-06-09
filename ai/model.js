@@ -40,14 +40,4 @@ async function checkImage(url) {
 module.exports = {
   loadModel,
   checkImage
-};  return Math.min(score, 1);
-}
-
-module.exports = {
-  loadModel,
-  checkImage
-};
-module.exports = {
-  loadModel,
-  checkImage
 };
