@@ -1,33 +1,41 @@
-const nsfw = require("nsfwjs");
 const tf = require("@tensorflow/tfjs-node");
-const { loadImage, createCanvas } = require("canvas");
+const nsfw = require("nsfwjs");
+const fetch = require("node-fetch");
 
 let model;
 
+// 🧠 تحميل AI model مرة واحدة عند التشغيل
 async function loadModel() {
   model = await nsfw.load();
   console.log("AI Model Loaded");
 }
 
-async function checkImage(path) {
-  const img = await loadImage(path);
+// 🖼️ تحويل الصورة من URL إلى Tensor وتحليلها
+async function checkImage(url) {
+  const res = await fetch(url);
+  const buffer = await res.buffer();
 
-  const canvas = createCanvas(img.width, img.height);
-  const ctx = canvas.getContext("2d");
+  const image = await tf.node.decodeImage(buffer, 3);
+  const predictions = await model.classify(image);
 
-  ctx.drawImage(img, 0, 0);
-
-  const predictions = await model.classify(canvas);
+  image.dispose(); // مهم لتوفير الذاكرة
 
   let score = 0;
 
-  for (const p of predictions) {
-    if (["Porn", "Hentai", "Sexy"].includes(p.className)) {
+  predictions.forEach(p => {
+    if (
+      p.className === "Porn" ||
+      p.className === "Hentai" ||
+      p.className === "Sexy"
+    ) {
       score += p.probability;
     }
-  }
+  });
 
   return Math.min(score, 1);
 }
 
-module.exports = { loadModel, checkImage };
+module.exports = {
+  loadModel,
+  checkImage
+};
