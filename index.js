@@ -16,25 +16,56 @@ const client = new Client({
 
 let processing = false;
 
-// 🚀 تشغيل البوت
 client.once("ready", async () => {
   console.log("Bot ready");
-
-  try {
-    await loadModel();
-  } catch (err) {
-    console.log("AI load error:", err.message);
-  }
+  await loadModel();
 });
 
-// 📥 الرسائل
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-
   if (processing) return;
+
   processing = true;
 
   try {
+    for (const file of message.attachments.values()) {
+
+      const url = file.url;
+      const type = file.contentType || "";
+
+      const tempPath = path.join(__dirname, "temp_" + Date.now());
+
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(tempPath, buffer);
+
+      let score = 0;
+
+      if (type.includes("video")) {
+        console.log("Video detected");
+        score = await checkVideo(tempPath);
+      } else {
+        console.log("Image detected");
+        score = await checkImage(tempPath);
+      }
+
+      console.log("Score:", score);
+
+      if (score >= 0.45) {
+        await message.delete().catch(() => {});
+      }
+
+      fs.unlinkSync(tempPath);
+    }
+
+  } catch (err) {
+    console.log("Error:", err.message);
+  }
+
+  processing = false;
+});
+
+client.login(process.env.TOKEN);  try {
     for (const file of message.attachments.values()) {
 
       const url = file.url;
