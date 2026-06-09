@@ -2,10 +2,10 @@ const fs = require("fs");
 const extractFrames = require("../utils/extractFrames");
 const { checkImage } = require("./model");
 
-async function checkVideo(path) {
+async function checkVideo(videoPath) {
   const dir = "./frames_" + Date.now();
 
-  await extractFrames(path, dir);
+  await extractFrames(videoPath, dir);
 
   const files = fs.readdirSync(dir);
 
@@ -16,14 +16,13 @@ async function checkVideo(path) {
     scores.push(score);
   }
 
-  // 🧠 تحسين: حذف المجلد لتفادي crash
+  // 🧹 تنظيف مهم جدًا
   fs.rmSync(dir, { recursive: true, force: true });
 
-  // 🔥 تحسين الدقة: إذا أي frame خطير جدًا → اعتبر الفيديو خطر
+  // 🧠 تحليل ذكي (متوسط + أقصى قيمة)
   const max = Math.max(...scores);
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
 
-  // 🔥 قرار ذكي (أفضل من max فقط)
   return Math.max(max, avg);
 }
 
