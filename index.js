@@ -14,16 +14,20 @@ const client = new Client({
   ]
 });
 
-// 🧠 منع الضغط
 let processing = false;
 
 // 🚀 تشغيل البوت
 client.once("ready", async () => {
   console.log("Bot ready");
-  await loadModel();
+
+  try {
+    await loadModel();
+  } catch (err) {
+    console.log("AI load error:", err.message);
+  }
 });
 
-// 📥 استقبال الرسائل
+// 📥 الرسائل
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
@@ -35,6 +39,41 @@ client.on("messageCreate", async (message) => {
 
       const url = file.url;
       const type = file.contentType || "";
+
+      const tempPath = path.join(__dirname, "temp_" + Date.now());
+
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(tempPath, buffer);
+
+      let score = 0;
+
+      if (type.includes("video")) {
+        console.log("Video detected");
+        score = await checkVideo(tempPath);
+      } else {
+        console.log("Image detected");
+        score = await checkImage(tempPath);
+      }
+
+      console.log("Score:", score);
+
+      if (score >= 0.45) {
+        await message.delete().catch(() => {});
+        console.log("Message deleted");
+      }
+
+      fs.unlinkSync(tempPath);
+    }
+
+  } catch (err) {
+    console.log("Runtime error:", err.message);
+  }
+
+  processing = false;
+});
+
+client.login(process.env.TOKEN);      const type = file.contentType || "";
 
       const tempPath = path.join(__dirname, "temp_" + Date.now());
 
