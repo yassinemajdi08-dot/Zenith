@@ -1,40 +1,10 @@
-const { Client, GatewayIntentBits } = require("discord.js");
-const { loadModel, checkImage } = require("./ai/model");
-const checkVideo = require("./ai/videoCheck");
-
-const fetch = require("node-fetch");
-const fs = require("fs");
-const path = require("path");
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
-
-let processing = false;
-
-// 🚀 تشغيل البوت
-client.once("ready", async () => {
-  console.log("Bot ready");
-  await loadModel();
-});
-
-// 📥 الرسائل
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-  if (processing) return;
-
-  processing = true;
-
-  try {
-    for (const file of message.attachments.values()) {
-
-      const url = file.url;
-      const type = file.contentType || "";
-
+if (type.includes("video")) {
+  console.log("Video detected");
+  score = await checkVideo(tempPath);
+} else {
+  console.log("Image detected");
+  score = await checkImage(tempPath);
+}
       const tempPath = path.join(__dirname, "temp_" + Date.now());
 
       const res = await fetch(url);
