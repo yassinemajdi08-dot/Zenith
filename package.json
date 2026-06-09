@@ -8,9 +8,9 @@
   "dependencies": {
     "discord.js": "^14.0.0",
     "node-fetch": "^2.6.7",
-    "fs-extra": "^11.1.1",
     "nsfwjs": "^2.4.2",
     "@tensorflow/tfjs-node": "^4.10.0",
-    "fluent-ffmpeg": "^2.1.2"
+    "fluent-ffmpeg": "^2.1.2",
+    "fs-extra": "^11.1.1"
   }
 }
