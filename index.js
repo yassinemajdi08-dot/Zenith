@@ -1,40 +1,4 @@
-console.log("BOT STARTING...");
-      const res = await fetch(url);
-      const buffer = Buffer.from(await res.arrayBuffer());
-      fs.writeFileSync(tempPath, buffer);
-
-      let score = 0;
-
-      if (type.includes("video")) {
-        score = await checkVideo(tempPath);
-      } else {
-        score = await checkImage(tempPath);
-      }
-
-      if (score >= 0.45) {
-        await message.delete().catch(() => {});
-      }
-
-      fs.unlinkSync(tempPath);
-    }
-  } catch (err) {
-    console.log(err);
-  }
-
-  processing = false;
-});
-
-client.login(process.env.TOKEN);  processing = false;
-});
-
-client.login(process.env.TOKEN);
-      const res = await fetch(url);
-      const buffer = Buffer.from(await res.arrayBuffer());
-      fs.writeFileSync(tempPath, buffer);
-
-      let score = 0;
-
-      if (type.includes("video")) {
+throw new Error("TEST INDEX FILE");      if (type.includes("video")) {
         console.log("Video detected");
         score = await checkVideo(tempPath);
       } else {
