@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits } = require("discord.js");
-const { loadModel, checkImage } = require("./ai/model");
+const { loadModel } = require("./ai/model");
 const checkVideo = require("./ai/videoCheck");
+const { checkImage } = require("./ai/model");
 
 const fetch = require("node-fetch");
 const fs = require("fs");
@@ -14,27 +15,68 @@ const client = new Client({
   ]
 });
 
-const THRESHOLD = 0.6;
+// 🧠 منع الضغط (مهم لمنع الكراش)
+let processing = false;
 
-// 🧠 تحميل AI عند التشغيل
+// 🚀 تشغيل البوت
 client.once("ready", async () => {
   console.log("Bot ready");
   await loadModel();
 });
 
-// 📥 فحص الرسائل
+// 📥 استقبال الرسائل
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  for (const file of message.attachments.values()) {
+  // 🔴 Lock system
+  if (processing) return;
+  processing = true;
 
-    const url = file.url;
-    const type = file.contentType || "";
+  try {
+    for (const file of message.attachments.values()) {
 
-    // ملف مؤقت
-    const tempPath = path.join(__dirname, "temp_" + Date.now());
+      const url = file.url;
+      const type = file.contentType || "";
 
-    try {
+      const tempPath = path.join(__dirname, "temp_" + Date.now());
+
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(tempPath, buffer);
+
+      let score = 0;
+
+      // 🎥 فيديو
+      if (type.includes("video")) {
+        console.log("Video detected");
+        score = await checkVideo(tempPath);
+      }
+
+      // 🖼️ صورة
+      else {
+        console.log("Image detected");
+        score = await checkImage(tempPath);
+      }
+
+      console.log("Score:", score);
+
+      if (score >= 0.6) {
+        await message.delete().catch(() => {});
+        console.log("Message deleted");
+      }
+
+      fs.unlinkSync(tempPath);
+    }
+
+  } catch (err) {
+    console.log("Error:", err.message);
+  }
+
+  // 🔓 فتح القفل
+  processing = false;
+});
+
+client.login(process.env.TOKEN);    try {
       // تحميل الملف
       const res = await fetch(url);
       const buffer = Buffer.from(await res.arrayBuffer());
