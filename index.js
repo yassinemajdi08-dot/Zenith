@@ -1,10 +1,5 @@
 const { Client, GatewayIntentBits } = require("discord.js");
-const { loadModel, checkImage } = require("./ai/model");
-const checkVideo = require("./ai/videoCheck");
-
 const fetch = require("node-fetch");
-const fs = require("fs");
-const path = require("path");
 
 const client = new Client({
   intents: [
@@ -14,27 +9,24 @@ const client = new Client({
   ]
 });
 
-let processing = false;
+const NAZI_WORDS = ["nazi", "hitler", "swastika"];
 
-client.once("ready", async () => {
-  console.log("Bot ready");
-  await loadModel();
+client.once("ready", () => {
+  console.log("Bot is online");
 });
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-  if (processing) return;
 
-  processing = true;
+  const text = message.content.toLowerCase();
 
-  try {
-    for (const file of message.attachments.values()) {
+  if (NAZI_WORDS.some(w => text.includes(w))) {
+    await message.delete().catch(() => {});
+    console.log("Deleted Nazi content");
+  }
+});
 
-      const url = file.url;
-      const type = file.contentType || "";
-
-      const tempPath = path.join(__dirname, "temp_" + Date.now());
-
+client.login(process.env.TOKEN);
       const res = await fetch(url);
       const buffer = Buffer.from(await res.arrayBuffer());
       fs.writeFileSync(tempPath, buffer);
