@@ -16,11 +16,13 @@ const client = new Client({
 
 let processing = false;
 
+// 🚀 تشغيل البوت
 client.once("ready", async () => {
   console.log("Bot ready");
   await loadModel();
 });
 
+// 📥 الرسائل
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (processing) return;
@@ -35,6 +37,37 @@ client.on("messageCreate", async (message) => {
 
       const tempPath = path.join(__dirname, "temp_" + Date.now());
 
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(tempPath, buffer);
+
+      let score = 0;
+
+      if (type.includes("video")) {
+        console.log("Video detected");
+        score = await checkVideo(tempPath);
+      } else {
+        console.log("Image detected");
+        score = await checkImage(tempPath);
+      }
+
+      console.log("Score:", score);
+
+      if (score >= 0.45) {
+        await message.delete().catch(() => {});
+      }
+
+      fs.unlinkSync(tempPath);
+    }
+
+  } catch (err) {
+    console.log("Error:", err.message);
+  }
+
+  processing = false;
+});
+
+client.login(process.env.TOKEN);
       const res = await fetch(url);
       const buffer = Buffer.from(await res.arrayBuffer());
       fs.writeFileSync(tempPath, buffer);
