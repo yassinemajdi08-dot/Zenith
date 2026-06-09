@@ -4,7 +4,7 @@ function extractFrames(videoPath, outputDir) {
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .screenshots({
-        count: 3,
+        count: 5,
         folder: outputDir,
         filename: "frame-%i.png",
         size: "320x240"
