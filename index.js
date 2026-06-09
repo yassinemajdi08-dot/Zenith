@@ -1,4 +1,7 @@
 const { Client, GatewayIntentBits } = require("discord.js");
+const fetch = require("node-fetch");
+const tf = require("@tensorflow/tfjs-node");
+const nsfw = require("nsfwjs");
 
 const client = new Client({
   intents: [
@@ -8,60 +11,65 @@ const client = new Client({
   ]
 });
 
-// كلمات ممنوعة (نازية + إساءة)
-const BLOCK_WORDS = [
-  "nazi",
-  "hitler",
-  "swastika",
-  "heil"
-];
+let model;
 
-function isBlockedText(text) {
-  if (!text) return false;
-  text = text.toLowerCase();
-  return BLOCK_WORDS.some(w => text.includes(w));
+// 🔥 تحميل الموديل
+async function loadModel() {
+  if (!model) {
+    model = await nsfw.load();
+    console.log("NSFW Model Loaded");
+  }
 }
 
-client.once("ready", () => {
-  console.log("ZENITH BOT ONLINE");
+// 🔥 فحص الصورة
+async function checkImage(url) {
+  const res = await fetch(url);
+  const buffer = await res.buffer();
+
+  const image = await tf.node.decodeImage(buffer, 3);
+  const predictions = await model.classify(image);
+
+  image.dispose();
+
+  let score = 0;
+
+  for (const p of predictions) {
+    if (["Porn", "Hentai", "Sexy"].includes(p.className)) {
+      score += p.probability;
+    }
+  }
+
+  return score;
+}
+
+client.once("ready", async () => {
+  console.log("ZENITH ONLINE");
+  await loadModel();
 });
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   try {
-    // 🔴 فحص النص
-    if (isBlockedText(message.content)) {
-      await message.delete().catch(() => {});
-      console.log("Deleted text content");
-      return;
-    }
-
-    // 🔴 فحص الملفات (صور / فيديو / gif / stickers)
     for (const file of message.attachments.values()) {
       const type = file.contentType || "";
 
-      // صور + GIF + Stickers
+      // 🖼️ فقط الصور + gif + stickers
       if (
         type.includes("image") ||
         type.includes("gif") ||
         type.includes("webp")
       ) {
-        console.log("Media detected (image/gif/sticker)");
-        // هنا لاحقًا نضيف AI NSFW إذا تريد
-      }
+        const score = await checkImage(file.url);
 
-      // فيديو
-      else if (type.includes("video")) {
-        console.log("Video detected");
-        // لاحقًا نضيف frame analysis
-      }
+        console.log("Image score:", score);
 
-      else {
-        console.log("Other file ignored");
+        if (score >= 0.5) {
+          await message.delete().catch(() => {});
+          console.log("Deleted unsafe image");
+        }
       }
     }
-
   } catch (err) {
     console.log("Error:", err.message);
   }
