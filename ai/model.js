@@ -4,6 +4,7 @@ const fetch = require("node-fetch");
 
 let model;
 
+// تحميل الموديل مرة واحدة فقط
 async function loadModel() {
   if (!model) {
     model = await nsfw.load();
@@ -11,8 +12,9 @@ async function loadModel() {
   }
 }
 
-async function checkImage(url) {
-  const res = await fetch(url);
+// تحليل صورة
+async function checkImage(path) {
+  const res = await fetch(path);
   const buffer = await res.buffer();
 
   const image = await tf.node.decodeImage(buffer, 3);
@@ -35,6 +37,10 @@ async function checkImage(url) {
   return Math.min(score, 1);
 }
 
+module.exports = {
+  loadModel,
+  checkImage
+};
 module.exports = {
   loadModel,
   checkImage
