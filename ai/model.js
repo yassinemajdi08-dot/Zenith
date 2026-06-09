@@ -2,8 +2,9 @@ const tf = require("@tensorflow/tfjs-node");
 const nsfw = require("nsfwjs");
 const fetch = require("node-fetch");
 
-let model;
+let model = null;
 
+// ✔ لازم تكون async function
 async function loadModel() {
   if (!model) {
     model = await nsfw.load();
@@ -22,7 +23,7 @@ async function checkImage(url) {
 
   let score = 0;
 
-  predictions.forEach(p => {
+  for (const p of predictions) {
     if (
       p.className === "Porn" ||
       p.className === "Hentai" ||
@@ -30,11 +31,15 @@ async function checkImage(url) {
     ) {
       score += p.probability;
     }
-  });
+  }
 
   return Math.min(score, 1);
 }
 
+module.exports = {
+  loadModel,
+  checkImage
+};
 module.exports = {
   loadModel,
   checkImage
