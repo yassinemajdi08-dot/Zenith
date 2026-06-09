@@ -16,10 +16,8 @@ async function checkVideo(videoPath) {
     scores.push(score);
   }
 
-  // 🧹 تنظيف مهم جدًا
   fs.rmSync(dir, { recursive: true, force: true });
 
-  // 🧠 تحليل ذكي (متوسط + أقصى قيمة)
   const max = Math.max(...scores);
   const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
 
