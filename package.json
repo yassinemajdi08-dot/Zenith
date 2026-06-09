@@ -1,5 +1,5 @@
 {
-  "name": "ai-moderation-bot",
+  "name": "Zenith",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -7,11 +7,6 @@
   },
   "dependencies": {
     "discord.js": "^14.0.0",
-    "node-fetch": "^2.6.7",
-    "nsfwjs": "^2.4.2",
-    "@tensorflow/tfjs-node": "^4.10.0",
-    "fs-extra": "^11.1.1",
-    "fluent-ffmpeg": "^2.1.2",
-    "ffmpeg-static": "^5.2.0"
+    "node-fetch": "^2.6.7"
   }
 }
