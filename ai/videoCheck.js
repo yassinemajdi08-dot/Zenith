@@ -1,6 +1,6 @@
+const fs = require("fs");
 const extractFrames = require("../utils/extractFrames");
 const { checkImage } = require("./model");
-const fs = require("fs");
 
 async function checkVideo(path) {
   const dir = "./frames_" + Date.now();
@@ -15,6 +15,9 @@ async function checkVideo(path) {
     const score = await checkImage(`${dir}/${file}`);
     scores.push(score);
   }
+
+  // 🔥 أهم تحسين: حذف frames بعد الاستخدام
+  fs.rmSync(dir, { recursive: true, force: true });
 
   return Math.max(...scores);
 }
