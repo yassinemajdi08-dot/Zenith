@@ -1,40 +1,79 @@
-const tf = require("@tensorflow/tfjs-node");
-const nsfw = require("nsfwjs");
+const { Client, GatewayIntentBits } = require("discord.js");
+const { loadModel, checkImage } = require("./ai/model");
+const checkVideo = require("./ai/videoCheck");
+
 const fetch = require("node-fetch");
+const fs = require("fs");
+const path = require("path");
 
-let model;
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
 
-// 🧠 تحميل مرة واحدة فقط
-async function loadModel() {
-  if (!model) {
-    model = await nsfw.load();
-    console.log("AI Model Loaded");
+let processing = false;
+
+// 🚀 تشغيل البوت
+client.once("ready", async () => {
+  console.log("Bot ready");
+
+  try {
+    await loadModel();
+  } catch (err) {
+    console.log("AI load error:", err.message);
   }
-}
+});
 
-// 🖼️ تحليل صورة
-async function checkImage(url) {
-  const res = await fetch(url);
-  const buffer = await res.buffer();
+// 📥 الرسائل
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
 
-  const image = await tf.node.decodeImage(buffer, 3);
-  const predictions = await model.classify(image);
+  if (processing) return;
+  processing = true;
 
-  image.dispose();
+  try {
+    for (const file of message.attachments.values()) {
 
-  let score = 0;
+      const url = file.url;
+      const type = file.contentType || "";
 
-  predictions.forEach(p => {
-    if (
-      p.className === "Porn" ||
-      p.className === "Hentai" ||
-      p.className === "Sexy"
-    ) {
-      score += p.probability;
+      const tempPath = path.join(__dirname, "temp_" + Date.now());
+
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(tempPath, buffer);
+
+      let score = 0;
+
+      if (type.includes("video")) {
+        console.log("Video detected");
+        score = await checkVideo(tempPath);
+      } else {
+        console.log("Image detected");
+        score = await checkImage(tempPath);
+      }
+
+      console.log("Score:", score);
+
+      if (score >= 0.45) {
+        await message.delete().catch(() => {});
+        console.log("Message deleted");
+      }
+
+      fs.unlinkSync(tempPath);
     }
-  });
 
-  return Math.min(score, 1);
+  } catch (err) {
+    console.log("Runtime error:", err.message);
+  }
+
+  processing = false;
+});
+
+client.login(process.env.TOKEN);  return Math.min(score, 1);
 }
 
 module.exports = {
