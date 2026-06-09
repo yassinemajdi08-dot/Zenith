@@ -1,16 +1,14 @@
 {
   "name": "ai-moderation-bot",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
     "discord.js": "^14.0.0",
-    "dotenv": "^16.0.0",
     "node-fetch": "^2.6.7",
     "fs-extra": "^11.1.1",
-  
     "nsfwjs": "^2.4.2",
     "@tensorflow/tfjs-node": "^4.10.0",
     "fluent-ffmpeg": "^2.1.2"
