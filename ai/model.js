@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 
 let model = null;
 
-// ✔ لازم تكون async function
+// ✔ تحميل الموديل بشكل صحيح
 async function loadModel() {
   if (!model) {
     model = await nsfw.load();
@@ -12,6 +12,7 @@ async function loadModel() {
   }
 }
 
+// ✔ فحص الصورة
 async function checkImage(url) {
   const res = await fetch(url);
   const buffer = await res.buffer();
@@ -35,6 +36,11 @@ async function checkImage(url) {
 
   return Math.min(score, 1);
 }
+
+module.exports = {
+  loadModel,
+  checkImage
+};}
 
 module.exports = {
   loadModel,
