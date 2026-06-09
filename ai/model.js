@@ -4,13 +4,15 @@ const fetch = require("node-fetch");
 
 let model;
 
-// 🧠 تحميل AI model مرة واحدة عند التشغيل
+// 🧠 تحميل الموديل مرة واحدة فقط
 async function loadModel() {
-  model = await nsfw.load();
-  console.log("AI Model Loaded");
+  if (!model) {
+    model = await nsfw.load();
+    console.log("AI Model Loaded");
+  }
 }
 
-// 🖼️ تحويل الصورة من URL إلى Tensor وتحليلها
+// 🖼️ تحليل صورة
 async function checkImage(url) {
   const res = await fetch(url);
   const buffer = await res.buffer();
@@ -18,7 +20,7 @@ async function checkImage(url) {
   const image = await tf.node.decodeImage(buffer, 3);
   const predictions = await model.classify(image);
 
-  image.dispose(); // مهم لتوفير الذاكرة
+  image.dispose();
 
   let score = 0;
 
@@ -35,6 +37,10 @@ async function checkImage(url) {
   return Math.min(score, 1);
 }
 
+module.exports = {
+  loadModel,
+  checkImage
+};
 module.exports = {
   loadModel,
   checkImage
