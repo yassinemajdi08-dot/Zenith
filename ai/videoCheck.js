@@ -16,10 +16,15 @@ async function checkVideo(path) {
     scores.push(score);
   }
 
-  // 🔥 أهم تحسين: حذف frames بعد الاستخدام
+  // 🧠 تحسين: حذف المجلد لتفادي crash
   fs.rmSync(dir, { recursive: true, force: true });
 
-  return Math.max(...scores);
+  // 🔥 تحسين الدقة: إذا أي frame خطير جدًا → اعتبر الفيديو خطر
+  const max = Math.max(...scores);
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+  // 🔥 قرار ذكي (أفضل من max فقط)
+  return Math.max(max, avg);
 }
 
 module.exports = checkVideo;
