@@ -1,17 +1,27 @@
-const ffmpeg = require("fluent-ffmpeg");
+const fs = require("fs");
+const extractFrames = require("../utils/extractFrames");
+const { checkImage } = require("./model");
 
-function extractFrames(videoPath, outputDir) {
-  return new Promise((resolve, reject) => {
-    ffmpeg(videoPath)
-      .screenshots({
-        count: 5,
-        folder: outputDir,
-        filename: "frame-%i.png",
-        size: "320x240"
-      })
-      .on("end", resolve)
-      .on("error", reject);
-  });
+async function checkVideo(videoPath) {
+  const dir = "./frames_" + Date.now();
+
+  await extractFrames(videoPath, dir);
+
+  const files = fs.readdirSync(dir);
+
+  let scores = [];
+
+  for (const file of files) {
+    const score = await checkImage(`${dir}/${file}`);
+    scores.push(score);
+  }
+
+  fs.rmSync(dir, { recursive: true, force: true });
+
+  const max = Math.max(...scores);
+  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+  return Math.max(max, avg);
 }
 
-module.exports = extractFrames;
+module.exports = checkVideo;
