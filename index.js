@@ -14,27 +14,67 @@ const client = new Client({
   ]
 });
 
-// 🧠 منع الضغط (مهم لتفادي الكراش)
+// 🧠 منع الضغط
 let processing = false;
 
 // 🚀 تشغيل البوت
 client.once("ready", async () => {
   console.log("Bot ready");
-
-  try {
-    await loadModel();
-  } catch (err) {
-    console.log("Error loading AI model:", err.message);
-  }
+  await loadModel();
 });
 
 // 📥 استقبال الرسائل
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  // 🔴 منع تشغيل عمليات متعددة
   if (processing) return;
   processing = true;
+
+  try {
+    for (const file of message.attachments.values()) {
+
+      const url = file.url;
+      const type = file.contentType || "";
+
+      const tempPath = path.join(__dirname, "temp_" + Date.now());
+
+      const res = await fetch(url);
+      const buffer = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(tempPath, buffer);
+
+      let score = 0;
+
+      // 🎥 فيديو
+      if (type.includes("video")) {
+        console.log("Video detected");
+        score = await checkVideo(tempPath);
+      }
+
+      // 🖼️ صورة
+      else {
+        console.log("Image detected");
+        score = await checkImage(tempPath);
+      }
+
+      console.log("Score:", score);
+
+      // 🚫 حذف أقوى وأكثر حساسية
+      if (score >= 0.45) {
+        await message.delete().catch(() => {});
+        console.log("Message deleted");
+      }
+
+      fs.unlinkSync(tempPath);
+    }
+
+  } catch (err) {
+    console.log("Error:", err.message);
+  }
+
+  processing = false;
+});
+
+client.login(process.env.TOKEN);  processing = true;
 
   try {
     for (const file of message.attachments.values()) {
