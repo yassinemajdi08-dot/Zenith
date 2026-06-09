@@ -4,7 +4,7 @@ const fetch = require("node-fetch");
 
 let model;
 
-// 🧠 تحميل الموديل مرة واحدة فقط
+// 🧠 تحميل مرة واحدة فقط
 async function loadModel() {
   if (!model) {
     model = await nsfw.load();
@@ -35,6 +35,12 @@ async function checkImage(url) {
   });
 
   return Math.min(score, 1);
+}
+
+module.exports = {
+  loadModel,
+  checkImage
+};  return Math.min(score, 1);
 }
 
 module.exports = {
