@@ -1,40 +1,44 @@
-const { Client, GatewayIntentBits } = require("discord.js");
-const { loadModel, checkImage } = require("./ai/model");
-const checkVideo = require("./ai/videoCheck");
-
+const tf = require("@tensorflow/tfjs-node");
+const nsfw = require("nsfwjs");
 const fetch = require("node-fetch");
-const fs = require("fs");
-const path = require("path");
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
-});
+let model;
 
-let processing = false;
-
-// 🚀 تشغيل البوت
-client.once("ready", async () => {
-  console.log("Bot ready");
-
-  try {
-    await loadModel();
-  } catch (err) {
-    console.log("AI load error:", err.message);
+async function loadModel() {
+  if (!model) {
+    model = await nsfw.load();
+    console.log("AI Model Loaded");
   }
-});
+}
 
-// 📥 الرسائل
-client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
+async function checkImage(url) {
+  const res = await fetch(url);
+  const buffer = await res.buffer();
 
-  if (processing) return;
-  processing = true;
+  const image = await tf.node.decodeImage(buffer, 3);
+  const predictions = await model.classify(image);
 
-  try {
+  image.dispose();
+
+  let score = 0;
+
+  predictions.forEach(p => {
+    if (
+      p.className === "Porn" ||
+      p.className === "Hentai" ||
+      p.className === "Sexy"
+    ) {
+      score += p.probability;
+    }
+  });
+
+  return Math.min(score, 1);
+}
+
+module.exports = {
+  loadModel,
+  checkImage
+};  try {
     for (const file of message.attachments.values()) {
 
       const url = file.url;
